@@ -21,12 +21,24 @@
   (+ x y z))
 
 (defmacro defn
-  [our-fn-name args body]
-  `(core/defn ~our-fn-name
-     (~(drop-last args) (partial ~our-fn-name ~@(drop-last args)))
-     (~args ~body))
-    #_(recur fn-name (drop-last args) body))
+  [fn-name args body]
+  `(core/defn ~fn-name
+     ~@(->> (range 1 (count args))
+            (map (fn [arg-count]
+                   `(~(vec (take arg-count args)) (partial ~fn-name ~@(take arg-count args))))))
+     (~args ~body)))
 
 (macroexpand (defn my-sum
-                   [x y]
-                   (+ x y)))
+               [x y]
+               (+ x y)))
+
+(defn my-sum
+  [x y z a]
+  (+ x y z a))
+
+(as-> (my-sum 1) %
+      (map % [2 3 4])
+      (apply juxt %)
+      (% 10)
+      (apply juxt %)
+      (% 100))
